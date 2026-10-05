@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kedjebygget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <img id="teamLogo" alt="" hidden>
+      <div>
+        <h1 id="teamName">Kedjebygget</h1>
+        <p>Kedjebygget · <button type="button" class="linkbtn" id="teamBtn">Laginställningar</button></p>
+      </div>
+    </div>
+    <a class="feedbackbtn" id="feedbackLink" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-4.3 3.6A.4.4 0 0 1 4 20.3V17a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      Tyck till
+    </a>
+    <div class="setbar" id="setbar">
+      <select id="setPick" aria-label="Välj uppställning"></select>
+      <input type="text" id="setName" placeholder="Namn" aria-label="Namn på uppställningen" style="width:150px">
+      <input type="date" id="setDate" aria-label="Datum">
+      <button class="btn" id="newSet">Ny</button>
+      <button class="btn" id="dupSet">Kopiera</button>
+      <button class="btn ghost" id="delSet">Ta bort</button>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tabLineup" data-view="lineup">Uppställning</button>
+    <button role="tab" id="tabActs" data-view="acts">Aktiviteter <span class="tabcount" id="tabCount"></span></button>
+  </nav>
+
+  <!-- ===== Uppställning ===== -->
+  <div id="viewLineup" role="tabpanel" aria-labelledby="tabLineup">
+    <div class="linkbar">
+      <label for="setAct">Aktivitet</label>
+      <span class="actinfo" id="actInfo" hidden></span>
+      <select id="setAct"></select>
+      <button class="btn ghost" id="unlinkAct" hidden>Koppla loss</button>
+      <span class="attsum" id="attSum"></span>
+      <button class="btn" id="attOpen">Närvaro</button>
+    </div>
+
+    <div class="grid">
+      <div class="panel side">
+        <header>
+          <h2>Trupp</h2>
+          <span class="pill" id="availCount"></span>
+          <button class="btn" id="editRoster" aria-pressed="false">Redigera</button>
+        </header>
+        <div class="bench" id="bench"></div>
+        <div class="rosterfoot">
+          <button class="btn" id="autoFill">Autofyll femmorna</button>
+          <button class="btn" id="clearLines">Töm uppställning</button>
+          <select class="btn" id="copyFrom" aria-label="Hämta uppställning från en annan aktivitet"></select>
+          <button class="btn primary" id="exportBtn">Exportera</button>
+        </div>
+        <div class="addrow">
+          <input type="text" id="addNum" placeholder="Nr" inputmode="numeric" aria-label="Tröjnummer">
+          <input type="text" id="addName" placeholder="Namn" aria-label="Namn">
+          <div class="full">
+            <select id="addPos" aria-label="Position">
+              <option value="F">F</option>
+              <option value="B">B</option>
+              <option value="MV">MV</option>
+            </select>
+            <button class="btn" id="addBtn">Lägg till spelare</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="unitbar" id="unitBar" hidden></div>
+        <div class="units" id="units"></div>
+        <div class="panel checks">
+          <header><h2>Kontroll</h2></header>
+          <ul id="checks"></ul>
+        </div>
+      </div>
+    </div>
+
+    <p class="foot">Samma spelare kan bara ha en plats i femmorna 1–4. I PP, BP, övertid och forcering får hen användas i flera enheter. Siffran längst till höger i trupplistan är antalet enheter spelaren ingår i — håll koll på den så ingen spelar ihjäl sig. Frånvaro gäller per uppställning. Allt sparas lokalt i den här webbläsaren.</p>
+  </div>
+
+  <!-- ===== Aktiviteter ===== -->
+  <div id="viewActs" role="tabpanel" aria-labelledby="tabActs" hidden>
+    <div class="actbar">
+      <button class="btn primary" id="importBtn">Hämta kalender</button>
+      <button class="btn" id="syncBtn" hidden>Uppdatera nu</button>
+      <input type="file" id="icsFile" accept=".ics,.json,text/calendar,application/json" hidden>
+      <label class="toggle"><input type="checkbox" id="showPast"> Visa passerade</label>
+      <span class="feedinfo" id="feedInfo"></span>
+      <span class="spacer"></span>
+      <span class="pill" id="actCount"></span>
+    </div>
+    <p class="hint">Lägg in länken till lagets kalender en gång, så hämtas den varje gång du öppnar Kedjebygget. Ändrade aktiviteter uppdateras, och det som tagits bort i kalendern tas bort här — inget dubbleras.</p>
+    <div id="actList"></div>
+  </div>
+
+  <div class="datarow">
+    <span id="backupInfo"></span>
+    <button class="btn" id="backupSave">Spara backup</button>
+    <button class="btn ghost" id="backupLoad">Läs in backup</button>
+    <input type="file" id="backupFile" accept=".json,application/json" hidden>
+  </div>
+</div>
+
+<!-- ===== Lagdialog (visas vid första start) ===== -->
+<dialog id="teamDlg" aria-labelledby="teamTitle">
+  <form method="dialog" class="dlg">
+    <header>
+      <h2 id="teamTitle">Ditt lag</h2>
+    </header>
+    <div class="dlg-body">
+      <p class="hint" id="teamIntro">Välkommen! Fyll i laget så hamnar namn och logga på uppställningarna du exporterar. Du kan ändra allt senare.</p>
+      <label class="field">Lagnamn
+        <input type="text" id="tName" placeholder="t.ex. IK Sirius P14" autocomplete="off">
+      </label>
+      <div class="field"><span>Logga <span class="muted">(valfritt)</span></span>
+        <div class="logorow">
+          <div class="logoprev" id="tLogoPrev"><span>Ingen logga</span></div>
+          <button type="button" class="btn" id="tLogoPick">Välj bild…</button>
+          <button type="button" class="btn ghost" id="tLogoDel" hidden>Ta bort</button>
+          <input type="file" id="tLogoFile" accept="image/*" hidden>
+        </div>
+      </div>
+      <label class="field"><span>Kalender <span class="muted">(valfritt)</span></span>
+        <input type="text" id="tCal" placeholder="https://www.laget.se/ditt-lag" autocomplete="off" inputmode="url">
+      </label>
+      <p class="hint" id="tCalInfo"></p>
+    </div>
+    <footer>
+      <button class="btn ghost" value="cancel" id="tCancel">Avbryt</button>
+      <button class="btn primary" type="button" id="tSave">Spara</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ===== Kalenderdialog ===== -->
+<dialog id="calDlg" aria-labelledby="calTitle">
+  <form method="dialog" class="dlg">
+    <header>
+      <h2 id="calTitle">Hämta kalender</h2>
+    </header>
+    <div class="dlg-body">
+      <label class="field">Länk till lagets kalender eller hemsida
+        <input type="text" id="cLink" placeholder="https://www.laget.se/ditt-lag" autocomplete="off" inputmode="url">
+      </label>
+      <p class="hint" id="cInfo"></p>
+      <details class="howto">
+        <summary>Var hittar jag länken?</summary>
+        <ul>
+          <li><b>laget.se:</b> lagets hemsida räcker, t.ex. <code>www.laget.se/IKSirius-P14</code>. Eller Kalender → Prenumerera och kopiera länken.</li>
+          <li><b>Svenska lag:</b> lagets hemsida, t.ex. <code>www.svenskalag.se/iksirius-p14</code>, eller kalenderns prenumerationslänk.</li>
+          <li><b>SportAdmin, IdrottOnline m.fl.:</b> leta efter <i>Prenumerera</i>, <i>Exportera</i> eller <i>iCal</i> i kalendern och kopiera länken.</li>
+          <li><b>Spond:</b> har ingen kalenderlänk — importera en fil i stället.</li>
+        </ul>
+      </details>
+    </div>
+    <footer>
+      <button type="button" class="linkbtn" id="cFile">Importera fil i stället</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel">Avbryt</button>
+      <button class="btn primary" type="button" id="cFetch">Hämta</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ===== Närvarodialog ===== -->
+<dialog id="attDlg" aria-labelledby="attTitle">
+  <form method="dialog" class="dlg">
+    <header>
+      <h2 id="attTitle">Närvaro</h2>
+      <span class="pill" id="attFor"></span>
+    </header>
+    <div class="dlg-body">
+      <p class="hint">Kopiera deltagarlistan från aktiviteten i lagets app eller hemsida och klistra in här. Svar som <i>Deltar</i>, <i>Kommer inte</i> och <i>Ej svarat</i> sorteras ut automatiskt, och ledare hoppas över. En vanlig namnlista — ett namn per rad — räknas som de som kommer.</p>
+      <details class="howto">
+        <summary>Tips per plattform</summary>
+        <ul>
+          <li><b>laget.se:</b> markera hela listan från <i>Välj alla</i> och neråt.</li>
+          <li><b>Svenska lag, SportAdmin, Spond m.fl.:</b> markera listan över de som svarat och kopiera. Fungerar det dåligt, skriv namnen under rubrikerna <i>Kommer</i> och <i>Kommer inte</i>.</li>
+        </ul>
+      </details>
+      <textarea id="attText" rows="7" aria-label="Närvarolista" placeholder="Kommer&#10;Anna Andersson&#10;Erik Berg&#10;&#10;Kommer inte&#10;Sara Lind"></textarea>
+      <div id="attReview"></div>
+      <label class="toggle"><input type="checkbox" id="attStrict" checked> Den som inte svarat eller saknas i listan räknas som frånvarande</label>
+    </div>
+    <footer>
+      <button class="btn ghost" value="cancel">Avbryt</button>
+      <button class="btn primary" type="button" id="attSave">Spara närvaro</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ===== Exportdialog ===== -->
+<dialog id="expDlg" aria-labelledby="expTitle">
+  <form method="dialog" class="dlg dlg-wide">
+    <header>
+      <h2 id="expTitle">Exportera</h2>
+      <div class="seg" role="radiogroup" aria-label="Typ av utskrift">
+        <button type="button" role="radio" data-mode="traning">Träning</button>
+        <button type="button" role="radio" data-mode="match">Match</button>
+      </div>
+    </header>
+    <div class="dlg-body exp">
+      <div class="expopts">
+        <div id="expColors"></div>
+        <label class="toggle"><input type="checkbox" id="expST"> Powerplay och boxplay</label>
+        <label class="toggle"><input type="checkbox" id="expExtra"> Övertid och forcering</label>
+        <label class="toggle" id="expRestWrap"><input type="checkbox" id="expRest"> Övriga som kommer (utan femma)</label>
+      </div>
+      <div class="expprev"><img id="expImg" alt="Förhandsvisning av uppställningen"></div>
+    </div>
+    <footer>
+      <button class="btn ghost" value="cancel">Stäng</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="expText">Kopiera text</button>
+      <button type="button" class="btn" id="expPrint">Skriv ut / PDF</button>
+      <button type="button" class="btn" id="expCopy">Kopiera bild</button>
+      <button type="button" class="btn" id="expSave">Ladda ner bild</button>
+      <button type="button" class="btn primary" id="expShare" hidden>Dela</button>
+    </footer>
+  </form>
+</dialog>
+<div id="printSheet" aria-hidden="true"><img id="printImg" alt=""></div>
+
+<div class="sr" id="live" role="status" aria-live="polite"></div>
+
+<script src="ics.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
